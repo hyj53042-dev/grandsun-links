@@ -1,0 +1,169 @@
+<title>그랜드썬 전기설계</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 단선결선도 콘셉트 — 상단 모선(BUS)에서 각 링크가 피더(F-01, F-02…)로 분기 */
+:root {
+  --bg: #f3f5f7;
+  --panel: #ffffff;
+  --ink: #14202e;
+  --muted: #5d6b7a;
+  --line: #c9d2dc;
+  --accent: #e08a00;
+  --accent-soft: #fff3df;
+  --font-display: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1620; --panel: #16202c; --ink: #e6ebf1; --muted: #93a1b0;
+    --line: #2b3a4b; --accent: #f2a531; --accent-soft: #2a2316; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1620; --panel: #16202c; --ink: #e6ebf1; --muted: #93a1b0;
+  --line: #2b3a4b; --accent: #f2a531; --accent-soft: #2a2316; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  padding-inline: 16px;
+  padding-block: 48px 64px;
+}
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+header { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.mark {
+  width: 64px; height: 64px; border-radius: 50%;
+  border: 2px solid var(--ink);
+  display: grid; place-items: center;
+  background: var(--panel);
+}
+.mark svg { width: 34px; height: 34px; }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 1.75rem; letter-spacing: -0.01em;
+  margin: 0; text-wrap: balance;
+}
+.sub {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  margin: 0;
+}
+
+/* 모선 + 피더 */
+.bus { position: relative; padding-top: 18px; }
+.bus::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--ink); border-radius: 2px;
+}
+.bus-label {
+  position: absolute; top: -20px; right: 0;
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; color: var(--muted);
+}
+ul { list-style: none; margin: 0; padding: 0 0 0 22px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+ul::before {
+  content: ""; position: absolute; left: 6px; top: -18px; bottom: 30px;
+  width: 2px; background: var(--line);
+}
+li { position: relative; }
+li::before {
+  content: ""; position: absolute; left: -16px; top: 50%; width: 16px; height: 2px; background: var(--line);
+}
+li::after {
+  content: ""; position: absolute; left: -20px; top: calc(50% - 4px);
+  width: 6px; height: 6px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line);
+}
+
+a.link {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: inherit; text-decoration: none;
+  transition: border-color .15s, transform .15s, background .15s;
+}
+a.link:hover { border-color: var(--accent); transform: translateX(3px); }
+a.link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tag {
+  flex: none;
+  font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500;
+  padding: 3px 7px; border-radius: 5px;
+  background: var(--accent-soft); color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.txt { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.name { font-weight: 700; font-size: 1.02rem; }
+.desc { font-size: 0.85rem; color: var(--muted); }
+.host {
+  font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.arrow { flex: none; color: var(--muted); font-family: var(--font-mono); }
+a.link:hover .arrow { color: var(--accent); }
+
+footer {
+  text-align: center; font-family: var(--font-mono);
+  font-size: 0.7rem; letter-spacing: 0.08em; color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) { a.link { transition: none; } a.link:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="17" cy="17" r="5.5" fill="var(--accent)" stroke="var(--accent)"/>
+        <path d="M17 3v4M17 27v4M3 17h4M27 17h4M7 7l2.8 2.8M24.2 24.2 27 27M7 27l2.8-2.8M24.2 9.8 27 7" stroke="var(--ink)"/>
+      </svg>
+    </div>
+    <h1>그랜드썬 전기설계</h1>
+    <p class="sub">Grandsun · Electrical Design</p>
+  </header>
+
+  <nav class="bus" aria-label="링크 목록">
+    <span class="bus-label">MAIN BUS</span>
+    <ul id="list"></ul>
+  </nav>
+
+  <footer id="count"></footer>
+</div>
+
+<script>
+/* ============================================================
+   링크 추가 방법: 아래 LINKS 배열에 한 줄씩 추가하세요.
+   { name: "표시 이름", url: "https://...", desc: "설명(선택)" },
+   순서대로 F-01, F-02 … 번호가 자동으로 붙습니다.
+   ============================================================ */
+const LINKS = [
+  { name: "설계 플랫폼",      url: "https://grandsun.hyj53042.workers.dev/" },
+  { name: "공사계획신고현황", url: "https://hyj53042-dev.github.io/-construction-notice-tracker/" },
+];
+
+const list = document.getElementById("list");
+LINKS.forEach((l, i) => {
+  let host = l.url;
+  try { const u = new URL(l.url); host = u.host + u.pathname.replace(/\/$/, ""); } catch (e) {}
+  const li = document.createElement("li");
+  const a = document.createElement("a");
+  a.className = "link"; a.href = l.url; a.target = "_blank"; a.rel = "noopener";
+  const tag = document.createElement("span");
+  tag.className = "tag"; tag.textContent = "F-" + String(i + 1).padStart(2, "0");
+  const txt = document.createElement("span"); txt.className = "txt";
+  const name = document.createElement("span"); name.className = "name"; name.textContent = l.name;
+  txt.appendChild(name);
+  if (l.desc) { const d = document.createElement("span"); d.className = "desc"; d.textContent = l.desc; txt.appendChild(d); }
+  const h = document.createElement("span"); h.className = "host"; h.textContent = host; txt.appendChild(h);
+  const arr = document.createElement("span"); arr.className = "arrow"; arr.textContent = "→"; arr.setAttribute("aria-hidden", "true");
+  a.append(tag, txt, arr); li.appendChild(a); list.appendChild(li);
+});
+document.getElementById("count").textContent = "FEEDERS · " + LINKS.length;
+</script>
