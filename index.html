@@ -117,10 +117,6 @@ a.link:focus-visible, button.link:focus-visible, .modal-btn:focus-visible { outl
 .txt { min-width: 0; flex: 1; display: flex; flex-direction: column; }
 .name { font-weight: 700; font-size: 1.18rem; }
 .desc { font-size: 0.92rem; color: var(--muted); }
-.host {
-  font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 .arrow { flex: none; color: var(--muted); font-family: var(--font-mono); }
 a.link:hover .arrow { color: var(--accent); }
 
@@ -209,8 +205,6 @@ const LINKS = [
 
 const list = document.getElementById("list");
 LINKS.forEach((l, i) => {
-  let host = l.url;
-  try { const u = new URL(l.url); host = u.host + u.pathname.replace(/\/$/, ""); } catch (e) {}
   const li = document.createElement("li");
   let a;
   if (l.maintenance) {
@@ -227,7 +221,6 @@ LINKS.forEach((l, i) => {
   const name = document.createElement("span"); name.className = "name"; name.textContent = l.name;
   txt.appendChild(name);
   if (l.desc) { const d = document.createElement("span"); d.className = "desc"; d.textContent = l.desc; txt.appendChild(d); }
-  if (!l.maintenance) { const h = document.createElement("span"); h.className = "host"; h.textContent = host; txt.appendChild(h); }
   let end;
   if (l.maintenance) { end = document.createElement("span"); end.className = "badge"; end.textContent = "점검중"; }
   else { end = document.createElement("span"); end.className = "arrow"; end.textContent = "→"; end.setAttribute("aria-hidden", "true"); }
