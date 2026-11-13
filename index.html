@@ -14,6 +14,9 @@
   --line: #ccd2dd;
   --accent: #9a242d;
   --accent-soft: #f8e7e8;
+  --warn: #a15c00;
+  --warn-soft: #fff1d6;
+  --scrim: rgba(20, 27, 40, .45);
   --logo-light: block;
   --logo-dark: none;
   --font-display: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
@@ -24,12 +27,14 @@
   :root:not([data-theme="light"]) {
     --bg: #141b28; --glow-1: #1f2d4a; --glow-2: #3a1f28; --panel: #1c2534; --ink: #e8ecf2; --muted: #98a3b5;
     --line: #2f3a4d; --accent: #e0606a; --accent-soft: #3a1d22;
+    --warn: #f3b453; --warn-soft: #3a2d14; --scrim: rgba(0, 0, 0, .6);
     --logo-light: none; --logo-dark: block; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #141b28; --glow-1: #1f2d4a; --glow-2: #3a1f28; --panel: #1c2534; --ink: #e8ecf2; --muted: #98a3b5;
   --line: #2f3a4d; --accent: #e0606a; --accent-soft: #3a1d22;
+  --warn: #f3b453; --warn-soft: #3a2d14; --scrim: rgba(0, 0, 0, .6);
   --logo-light: none; --logo-dark: block; color-scheme: dark;
 }
 
@@ -89,7 +94,8 @@ li::after {
   width: 6px; height: 6px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line);
 }
 
-a.link {
+a.link, button.link {
+  width: 100%; font: inherit; text-align: left; cursor: pointer;
   display: flex; align-items: center; gap: 14px;
   padding: 16px 18px;
   background: var(--panel);
@@ -98,8 +104,8 @@ a.link {
   color: inherit; text-decoration: none;
   transition: border-color .15s, transform .15s, background .15s;
 }
-a.link:hover { border-color: var(--accent); transform: translateX(3px); }
-a.link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a.link:hover, button.link:hover { border-color: var(--accent); transform: translateX(3px); }
+a.link:focus-visible, button.link:focus-visible, .modal-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag {
   flex: none;
   font-family: var(--font-mono); font-size: 0.82rem; font-weight: 500;
@@ -117,11 +123,45 @@ a.link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .arrow { flex: none; color: var(--muted); font-family: var(--font-mono); }
 a.link:hover .arrow { color: var(--accent); }
 
+/* 점검중 링크 */
+.link.is-off { border-style: dashed; }
+.link.is-off .name { color: var(--muted); }
+.link.is-off .tag { background: var(--line); color: var(--muted); }
+.badge {
+  flex: none; font-size: 0.78rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--warn-soft); color: var(--warn);
+}
+
+/* 팝업 */
+.modal {
+  position: fixed; inset: 0; z-index: 10;
+  display: grid; place-items: center; padding: 16px;
+  background: var(--scrim);
+}
+.modal-box {
+  width: min(340px, 100%);
+  background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 14px;
+  padding: 26px 22px 20px; text-align: center;
+  display: flex; flex-direction: column; gap: 10px; align-items: center;
+  box-shadow: 0 18px 50px rgba(0,0,0,.18);
+}
+.modal-icon { font-size: 2rem; line-height: 1; }
+.modal-title { font-weight: 700; font-size: 1.2rem; margin: 0; }
+.modal-sub { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.modal-btn {
+  margin-top: 8px; width: 100%;
+  font: inherit; font-weight: 700; cursor: pointer;
+  padding: 11px; border-radius: 9px; border: 0;
+  background: var(--ink); color: var(--panel);
+}
+
 footer {
   text-align: center; font-family: var(--font-mono);
   font-size: 0.78rem; letter-spacing: 0.08em; color: var(--muted);
 }
-@media (prefers-reduced-motion: reduce) { a.link { transition: none; } a.link:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .link { transition: none; } .link:hover { transform: none; } }
 </style>
 
 <div class="wrap">
@@ -140,16 +180,27 @@ footer {
   <footer id="count"></footer>
 </div>
 
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+  <div class="modal-box">
+    <div class="modal-icon" aria-hidden="true">🛠️</div>
+    <p class="modal-title" id="modal-title">점검중 조금만 기다려주세요!</p>
+    <p class="modal-sub" id="modal-sub"></p>
+    <button class="modal-btn" id="modal-close" type="button">확인</button>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    링크 추가 방법: 아래 LINKS 배열에 한 줄씩 추가하세요.
    { name: "표시 이름", url: "https://...", desc: "설명(선택)" },
    순서대로 F-01, F-02 … 번호가 자동으로 붙습니다.
+   잠시 막아두려면 maintenance: true 를 붙이세요. (링크는 그대로 남고,
+   클릭하면 "점검중" 팝업만 뜹니다. 다시 열 때는 그 부분만 지우면 됩니다.)
    ============================================================ */
 const LINKS = [
   { name: "전기설계 실무자 회의", url: "https://claude.ai/artifact/13RBgjcJANkTMdmEvCHrkB" },
   { name: "전기설계 진행관리",   url: "https://claude.ai/artifact/J9xHhEvhPr8gqMLSNcFGkL" },
-  { name: "설계 플랫폼",      url: "https://grandsun.hyj53042.workers.dev/" },
+  { name: "설계 플랫폼",      url: "https://grandsun.hyj53042.workers.dev/", maintenance: true },
   { name: "공사계획신고현황", url: "https://claude.ai/code/artifact/345e71bc-3280-4e3e-9758-4949aa667118" },
 ];
 
@@ -158,17 +209,39 @@ LINKS.forEach((l, i) => {
   let host = l.url;
   try { const u = new URL(l.url); host = u.host + u.pathname.replace(/\/$/, ""); } catch (e) {}
   const li = document.createElement("li");
-  const a = document.createElement("a");
-  a.className = "link"; a.href = l.url; a.target = "_blank"; a.rel = "noopener";
+  let a;
+  if (l.maintenance) {
+    a = document.createElement("button");
+    a.type = "button"; a.className = "link is-off";
+    a.addEventListener("click", () => openModal(l.name));
+  } else {
+    a = document.createElement("a");
+    a.className = "link"; a.href = l.url; a.target = "_blank"; a.rel = "noopener";
+  }
   const tag = document.createElement("span");
   tag.className = "tag"; tag.textContent = "F-" + String(i + 1).padStart(2, "0");
   const txt = document.createElement("span"); txt.className = "txt";
   const name = document.createElement("span"); name.className = "name"; name.textContent = l.name;
   txt.appendChild(name);
   if (l.desc) { const d = document.createElement("span"); d.className = "desc"; d.textContent = l.desc; txt.appendChild(d); }
-  const h = document.createElement("span"); h.className = "host"; h.textContent = host; txt.appendChild(h);
-  const arr = document.createElement("span"); arr.className = "arrow"; arr.textContent = "→"; arr.setAttribute("aria-hidden", "true");
-  a.append(tag, txt, arr); li.appendChild(a); list.appendChild(li);
+  if (!l.maintenance) { const h = document.createElement("span"); h.className = "host"; h.textContent = host; txt.appendChild(h); }
+  let end;
+  if (l.maintenance) { end = document.createElement("span"); end.className = "badge"; end.textContent = "점검중"; }
+  else { end = document.createElement("span"); end.className = "arrow"; end.textContent = "→"; end.setAttribute("aria-hidden", "true"); }
+  a.append(tag, txt, end); li.appendChild(a); list.appendChild(li);
 });
+const modal = document.getElementById("modal");
+const modalClose = document.getElementById("modal-close");
+let lastFocus = null;
+function openModal(name) {
+  lastFocus = document.activeElement;
+  document.getElementById("modal-sub").textContent = name + " 점검 중입니다.";
+  modal.hidden = false; modalClose.focus();
+}
+function closeModal() { modal.hidden = true; if (lastFocus) lastFocus.focus(); }
+modalClose.addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !modal.hidden) closeModal(); });
+
 document.getElementById("count").textContent = "FEEDERS · " + LINKS.length;
 </script>
